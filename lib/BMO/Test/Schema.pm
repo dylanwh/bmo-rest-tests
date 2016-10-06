@@ -4,55 +4,68 @@ use experimental qw(signatures);
 use Exporter;
 use base qw(Exporter);
 
-our @EXPORT = qw(BUG GET_BUG ERROR);
+our @EXPORT = qw(BUG GET_BUG ERROR BUG_MODAL_EDIT GET_FIELDS);
 
-sub nullable($type) { return { oneOf => [ $type, { type => "null" } ] } }
+use constant STRING_T => { type => "string" };
+use constant INT_T    => { type => "integer" };
+use constant BOOL_T   => { type => "boolean" };
+use constant NULL_T   => { type => "null" };
+
+sub ONE_OF {
+    return { oneOf => [@_] };
+}
+
+sub OPTIONAL_T($type) :prototype($) { ONE_OF($type, NULL_T) }
+
+sub ARRAY_T($type) :prototype($) {
+    return { type => "array", items => $type }
+}
 
 use constant BUG => {
     type       => "object",
     properties => {
         actual_time           => { type => "double" },
-        alias                 => nullable({type => "string"}),
-        assigned_to           => { type => "string" },
+        alias                 => OPTIONAL_T(STRING_T),
+        assigned_to           => STRING_T,
         assigned_to_detail    => { type => "object" },
         blocks                => { type => "array" },
         cc                    => { type => "array" },
         cc_detail             => { type => "array" },
-        classification        => { type => "string" },
-        component             => { type => "string" },
-        creation_time         => { type => "string" },
-        creator               => { type => "string" },
+        classification        => STRING_T,
+        component             => STRING_T,
+        creation_time         => STRING_T,
+        creator               => STRING_T,
         creator_detail        => { type => "object" },
-        deadline              => nullable({ type => "string" }),
+        deadline              => OPTIONAL_T(STRING_T),
         depends_on            => { type => "array" },
-        dupe_of               => nullable({ type => "integer" }),
+        dupe_of               => OPTIONAL_T(INT_T),
         estimated_time        => { type => "double" },
         flags                 => { type => "array" },
         groups                => { type => "array" },
-        id                    => { type => "integer" },
-        is_cc_accessible      => { type => "boolean" },
-        is_confirmed          => { type => "boolean" },
-        is_open               => { type => "boolean" },
-        is_creator_accessible => { type => "boolean" },
+        id                    => INT_T,
+        is_cc_accessible      => BOOL_T,
+        is_confirmed          => BOOL_T,
+        is_open               => BOOL_T,
+        is_creator_accessible => BOOL_T,
         keywords              => { type => "array" },
-        last_change_time      => { type => "string" },
-        op_sys                => { type => "string" },
-        platform              => { type => "string" },
-        priority              => { type => "string" },
-        product               => { type => "string" },
-        qa_contact            => { type => "string" },
+        last_change_time      => STRING_T,
+        op_sys                => STRING_T,
+        platform              => STRING_T,
+        priority              => STRING_T,
+        product               => STRING_T,
+        qa_contact            => STRING_T,
         qa_contact_detail     => { type => "object" },
         remaining_time        => { type => "double" },
-        resolution            => { type => "string" },
+        resolution            => STRING_T,
         see_also              => { type => "array" },
-        severity              => { type => "string" },
-        status                => { type => "string" },
-        summary               => { type => "string" },
-        target_milestone      => { type => "string" },
-        update_token          => { type => "string" },
-        url                   => { type => "string" },
-        version               => { type => "string" },
-        whiteboard            => { type => "string" },
+        severity              => STRING_T,
+        status                => STRING_T,
+        summary               => STRING_T,
+        target_milestone      => STRING_T,
+        update_token          => STRING_T,
+        url                   => STRING_T,
+        version               => STRING_T,
+        whiteboard            => STRING_T,
     },
 };
 
@@ -71,12 +84,74 @@ use constant GET_BUG => {
 use constant ERROR => {
     type       => "object",
     properties => {
-        documentation => { type => "string" },
-        error         => { type => "boolean" },
-        code          => { type => "integer" },
-        message       => { type => "string" },
+        documentation => STRING_T,
+        error         => BOOL_T,
+        code          => INT_T,
+        message       => STRING_T,
     },
     required => [qw( error code message documentation )],
+};
+
+use constant NAME_LIST => {
+    type => "array",
+    items => {
+        type => "object",
+        properties => {
+            name => STRING_T,
+        },
+        required => ["name"],
+    },
+};
+
+use constant BUG_MODAL_EDIT_OPTIONS => qw(
+    product component version target_milestone priority bug_severity rep_platform op_sys
+);
+
+use constant BUG_MODAL_EDIT => {
+    type => "object",
+    properties => {
+        options => {
+            type => "object",
+            properties => {
+                map { ($_ => NAME_LIST) } BUG_MODAL_EDIT_OPTIONS,
+            },
+            required => [BUG_MODAL_EDIT_OPTIONS],
+        },
+        keywords => {
+            type => "array",
+            items => STRING_T,
+        },
+    },
+};
+
+use constant GET_FIELDS => {
+    type       => "object",
+    properties => {
+        "fields" => ARRAY_T {
+            type       => "object",
+            properties => {
+                id                => INT_T,
+                name              => STRING_T,
+                display_name      => STRING_T,
+                type              => INT_T,
+                is_mandatory      => BOOL_T,
+                value_field       => OPTIONAL_T(STRING_T),
+                values            => ARRAY_T { type => "object" },
+                visibility_values => ARRAY_T { type => "string" },
+                visibility_field  => OPTIONAL_T(STRING_T),
+                is_on_bug_entry   => BOOL_T,
+                is_custom         => BOOL_T,
+            },
+            required => [
+                qw[ id name display_name type is_mandatory value_field values
+                    is_on_bug_entry
+                    is_custom
+                    visibility_values
+                    visibility_field
+                    ]
+            ],
+        }
+    },
 };
 
 
