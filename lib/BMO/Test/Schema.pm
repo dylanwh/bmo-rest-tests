@@ -4,7 +4,7 @@ use experimental qw(signatures);
 use Exporter;
 use base qw(Exporter);
 
-our @EXPORT = qw(BUG GET_BUG);
+our @EXPORT = qw(BUG GET_BUG ERROR);
 
 sub nullable($type) { return { oneOf => [ $type, { type => "null" } ] } }
 
@@ -67,5 +67,17 @@ use constant GET_BUG => {
     },
     required => [ "faults", "bugs" ],
 };
+
+use constant ERROR => {
+    type       => "object",
+    properties => {
+        documentation => { type => "string" },
+        error         => { type => "boolean" },
+        code          => { type => "integer" },
+        message       => { type => "string" },
+    },
+    required => [qw( error code message documentation )],
+};
+
 
 1;

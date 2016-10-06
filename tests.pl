@@ -21,6 +21,13 @@ my @tests = (
         },
     },
     {
+        name => "get_1",
+        schema => ERROR,
+        request => sub($url) {
+            GET "$url/rest/bug/1",
+        },
+    },
+    {
         name => "get_888_inc",
         schema => GET_BUG,
         request => sub($url) {
@@ -70,10 +77,18 @@ my @tests = (
         request => sub ($url) {
             GET "$url/rest/field/bug",
         },
+        is_large => 1,
+    },
+    {
+        name => "get_fields_888",
+        request => sub ($url) {
+            GET "$url/rest/field/bug/888",
+        },
+        schema => ERROR,
     },
 );
 
-my $site_base = 'http://bugzilla.vm/bmo';
+my $site_base = 'http://bugzilla.vm/clean';
 my $site_diff = 'http://bugzilla.vm/1289886';
 
 my $ua = LWP::UserAgent->new;
@@ -87,6 +102,7 @@ sub _content_type ($msg) {
 }
 
 foreach my $test (@tests) {
+    my $name   = $test->{name};
     my $f      = $test->{request};
     my $schema = $test->{schema};
 
@@ -99,17 +115,20 @@ foreach my $test (@tests) {
     my $content_base  = $response_base->content;
     my $content_diff  = $response_diff->content;
 
-    is($response_base->code, $response_diff->code, "->code");
-    is(_content_type($response_base), _content_type($response_diff), "Content-Type");
-    is_deeply(_headers($response_base), _headers($response_diff), "headers");
+    is($response_base->code, $response_diff->code, "$name code");
+    is(_content_type($response_base), _content_type($response_diff), "$name Content-Type");
+    is_deeply(_headers($response_base), _headers($response_diff), "$name headers");
 
-    ok_json($content_base, "content_base");
-    ok_json($content_diff, "content_diff");
-    cmp_json($content_base, $content_diff, "content is same json document");
-    if ($schema) {
-        ok_json_schema($content_base, $schema, "schema of base");
-        ok_json_schema($content_diff, $schema, "schema of diff");
+    unless ($test->{is_large}) {
+        ok_json($content_base, "$name content_base");
+        ok_json($content_diff, "$name content_diff");
+        cmp_json($content_base, $content_diff, "$name content is same json document");
+        if ($schema) {
+            ok_json_schema($content_base, $schema, "$name schema of base");
+            ok_json_schema($content_diff, $schema, "$name schema of diff");
+        }
     }
+    is(length $content_base, length $content_diff, "$name, length of content");
 }
 
 
