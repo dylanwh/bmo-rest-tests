@@ -108,6 +108,7 @@ my @tests = (
             GET "$url/rest/bug_modal/edit/304998";
         },
         schema => BUG_MODAL_EDIT,
+        use_api_key => 1,
     },
     {
         name => 'comment_tags_error',
@@ -121,7 +122,7 @@ my @tests = (
         request => sub ($url) {
             GET "$url/rest/bug/comment/tags/spam";
         },
-        #    schema => { type => "array", items => { type => "string" } },
+        schema => { type => "array", items => { type => "string" } },
         use_api_key => 1,
     },
 );
@@ -147,9 +148,9 @@ foreach my $test (@tests) {
     my $content_base  = $response_base->content;
     my $content_diff  = $response_diff->content;
 
-    is($response_base->code, $response_diff->code, "$name code");
-    is(_content_type($response_base), _content_type($response_diff), "$name Content-Type");
-    is_deeply(_headers($response_base), _headers($response_diff), "$name headers");
+    is($response_base->code, $response_diff->code, "$name same code");
+    is(_content_type($response_base), _content_type($response_diff), "$name same Content-Type");
+    is_deeply(_headers($response_base), _headers($response_diff), "$name same headers");
 
     unless ($test->{is_large}) {
         ok_json($content_base, "$name content_base");

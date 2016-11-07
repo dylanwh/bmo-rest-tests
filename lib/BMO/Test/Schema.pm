@@ -10,6 +10,7 @@ use constant STRING_T => { type => "string" };
 use constant INT_T    => { type => "integer" };
 use constant BOOL_T   => { type => "boolean" };
 use constant NULL_T   => { type => "null" };
+use constant ARRAY_T  => { type => "array" };
 
 sub ONE_OF {
     return { oneOf => [@_] };
@@ -17,7 +18,7 @@ sub ONE_OF {
 
 sub OPTIONAL_T($type) :prototype($) { ONE_OF($type, NULL_T) }
 
-sub ARRAY_T($type) :prototype($) {
+sub ARRAY_OF($type) :prototype($) {
     return { type => "array", items => $type }
 }
 
@@ -127,7 +128,7 @@ use constant BUG_MODAL_EDIT => {
 use constant GET_FIELDS => {
     type       => "object",
     properties => {
-        "fields" => ARRAY_T {
+        "fields" => ARRAY_OF {
             type       => "object",
             properties => {
                 id                => INT_T,
@@ -136,14 +137,23 @@ use constant GET_FIELDS => {
                 type              => INT_T,
                 is_mandatory      => BOOL_T,
                 value_field       => OPTIONAL_T(STRING_T),
-                values            => ARRAY_T { type => "object" },
-                visibility_values => ARRAY_T { type => "string" },
+                values            => ARRAY_OF {
+                    type => "object",
+                    properties => {
+                        sort_key          => INT_T,
+                        name              => STRING_T,
+                        visibility_values => ARRAY_T,
+                        sortkey           => INT_T,
+                    },
+                    required => [qw[sort_key name visibility_values sortkey]],
+                },
+                visibility_values => ARRAY_OF { type => "string" },
                 visibility_field  => OPTIONAL_T(STRING_T),
                 is_on_bug_entry   => BOOL_T,
                 is_custom         => BOOL_T,
             },
             required => [
-                qw[ id name display_name type is_mandatory value_field values
+                qw[ id name display_name type is_mandatory
                     is_on_bug_entry
                     is_custom
                     visibility_values
